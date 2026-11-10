@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.NoteFloat" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/nf_primary</item>
+        <item name="colorOnPrimary">@color/nf_on_primary</item>
+        <item name="android:colorBackground">@color/nf_bg</item>
+        <item name="colorSurface">@color/nf_surface</item>
+        <item name="colorOnSurface">@color/nf_on_surface</item>
+        <item name="android:statusBarColor">@color/nf_bg</item>
+        <item name="android:navigationBarColor">@color/nf_bg</item>
+    </style>
+    <style name="Theme.NoteFloat.Transparent" parent="Theme.NoteFloat">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

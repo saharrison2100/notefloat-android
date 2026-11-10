@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nf_primary">#FF3D4EC8</color>
+    <color name="nf_on_primary">#FFFFFFFF</color>
+    <color name="nf_bg">#FFF6F7FB</color>
+    <color name="nf_surface">#FFFFFFFF</color>
+    <color name="nf_on_surface">#FF10131A</color>
+    <color name="nf_sub">#FF545C6E</color>
+    <color name="nf_divider">#FFE1E5EE</color>
+    <color name="ic_launcher_bg">#FF3D4EC8</color>
+</resources>

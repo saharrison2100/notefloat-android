@@ -1,69 +1,77 @@
 # NoteFloat
 
-A real Android note app with a floating sidebar: a draggable tab that sits on top of
-Chrome, WhatsApp or anything else, so a note can be captured without switching apps.
+Capture a note, a voice memo, a reminder or a clipboard item **without leaving the app you are in**.
 
-This is a native Android application, not a web page. The floating tab is an overlay
-window drawn by a foreground service, so it stays visible across the whole system.
+NoteFloat is a native Android app. Its centrepiece is a translucent glass handle that floats on the
+left or right screen edge over every other app, from a foreground service. Tap it and a compact panel
+opens with quick text capture, voice recording, recent notes, clipboard capture, reminders and search.
+
+Version 1.1.0 (versionCode 11), Android 7.0 and up, built from Kotlin with no web views and no
+third-party UI kit.
 
 ## Download
 
-Grab the signed APK from the Releases page, or build it yourself.
+Signed release APK: see the Releases tab. The build is signed with the `notefloat` key
+(SHA-256 fingerprint `39:1e:27:23:fd:a8:ad:f2:77:da:09:3b:3a:a2:05:72:18:b1:fa:f0:bb:42:28:fd:24:59:c8:51:c7:7e:75:96`),
+so 1.0.0 and 1.1.0 upgrade over each other.
 
-Android 7.0 (API 24) and above. On first run, open the app and tap
-**Turn on floating tab**, then grant **Display over other apps**.
+1. Open the APK on the phone and allow installs from that source.
+2. Open NoteFloat, follow the welcome screen, and grant **Display over other apps**.
+3. Optionally grant notifications (reminders) and the microphone when you first record.
 
-## What it does
+## What is in 1.1.0
 
-- Floating tab on the left or right edge, drag it up and down, snaps to the nearest edge
-- Tap the tab for a quick note panel: type, save, close, with the keyboard working
-- Long press the tab to hide it; the notification brings it back
-- Full notes list with search, pin to top (long press a row), edit and delete
-- Every note stored locally in SQLite, survives restarts
-- Light and dark themes
-- Foreground service with a persistent notification, as Android requires for overlays
+**Floating sidebar** - genuine `TYPE_APPLICATION_OVERLAY` windows owned by a foreground service.
+Drag vertically to move, drag across the middle of the screen to swap edge, tap to expand, double tap
+for quick capture, long press to hide. Opacity, edge, height and handle side are all configurable.
+The service stops itself if the overlay permission is revoked.
 
-## Permissions and why
+**Notes** - rich markup (headings, bold, italic, bullets, numbered lists, checklists), categories,
+tags, colour labels, pin, archive, duplicate, trash and restore, search, autosave with draft recovery.
 
-| Permission | Why |
-| --- | --- |
-| `SYSTEM_ALERT_WINDOW` | Draws the floating tab and quick note panel above other apps |
-| `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE` | Keeps the overlay alive and honest, with a visible notification |
-| `POST_NOTIFICATIONS` | Shows the ongoing notification with show/hide and stop actions |
+**Voice notes** - record, pause, resume, play, rename, attach to a note. `MediaRecorder` to app-private
+storage; the microphone is requested only when you tap record and nothing records in the background.
 
-No internet permission is requested. The app cannot phone home, and nothing leaves the device.
+**Reminders** - date and time, daily/weekly/monthly repeat, notification with Done and Snooze, history,
+survives reboot and clock changes via `AlarmManager` plus a boot receiver.
+
+**Clipboard capture** - reads the clipboard only when you tap it, previews, lets you edit, then saves
+as a note in a category. No background clipboard monitoring.
+
+**Cloud sync (optional)** - account sign-up/sign-in, then offline-first sync to the Base44 backend in
+`base44/`. Local Room is the source of truth while offline; conflicts are kept as copies, never dropped.
+
+**Privacy** - no analytics, no ad SDKs, no third-party libraries beyond AndroidX and Kotlin. Audio stays
+on the device unless you enable audio upload. Account deletion removes the server data in one action.
+Local JSON export in Storage and sync.
+
+## Repository layout
+
+```
+android/            Gradle project (Kotlin, minSdk 24, targetSdk 34)
+base44/             backend function sources (deployed separately, see documentation/API_SPECIFICATION.md)
+documentation/      architecture, API contract, build instructions, changelog
+legacy-v1.0/        the original single-file 1.0.0 app, kept for reference
+tests/              notes and fixtures for manual QA passes
+```
 
 ## Build
 
-No Gradle, no Android Studio. The APK is assembled directly from the SDK build tools.
-
-```bash
-export ANDROID_HOME=/path/to/android-sdk   # needs build-tools 34.0.0 and platforms/android-34
-export JAVA_HOME=/path/to/jdk17
-./build.sh
-```
-
-Output: `NoteFloat-1.0.0.apk`, signed with `notefloat-release.jks` (git-ignored, generated on
-first build). Keep that keystore: Android only accepts updates signed with the same key.
-
-Pipeline: `aapt2 compile` -> `aapt2 link` -> `javac` -> `d8` -> `zipalign` -> `apksigner`.
-
-## Project layout
+See `documentation/BUILD_INSTRUCTIONS.md`. Short version:
 
 ```
-AndroidManifest.xml
-src/com/notefloat/app/
-  MainActivity.java     notes list, search, editor, permission flow
-  OverlayService.java   foreground service, overlay tab, quick note panel
-  NoteStore.java        SQLite storage
-  Note.java             model
-  NoteAdapter.java      list rows
-res/                    layouts, colours, light and dark theme, icons
-build.sh                the whole build, start to finish
+cd android
+./gradlew :app:assembleRelease    # needs ANDROID_HOME and a JDK 17
 ```
 
-## Play Store notes
+Signing reads `android/keystore.properties` (git-ignored) or `NF_STORE_FILE`, `NF_STORE_PASSWORD`,
+`NF_KEY_ALIAS`, `NF_KEY_PASSWORD` environment variables. Nothing secret is committed.
 
-Publishing needs a signed AAB, a declared use for `SYSTEM_ALERT_WINDOW` in the Play
-Console, and a short video showing the overlay. The overlay-only design is compliant,
-but the declaration is mandatory.
+## Limits worth knowing
+
+1. Play Store distribution needs a Play-signed build; the APK here is self-signed for direct install.
+2. Android 13+ asks for notification permission at runtime; without it reminders still save but stay silent.
+3. Exact alarms need the "Alarms and reminders" permission on Android 12+; without it a reminder can
+   arrive a few minutes late.
+4. Some OEM builds (Xiaomi, Oppo, Huawei) kill foreground services aggressively. Exempting NoteFloat
+   from battery optimisation is the fix.

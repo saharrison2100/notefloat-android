@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NoteFloat</string>
+    <string name="tagline">Notes that float over any app</string>
+    <string name="enable_float">Turn on floating tab</string>
+    <string name="disable_float">Floating tab is on</string>
+    <string name="new_note">+ Note</string>
+    <string name="search_hint">Search notes</string>
+    <string name="empty_state">No notes yet. Tap + Note to write the first one.</string>
+    <string name="no_results">Nothing matched that search.</string>
+    <string name="quick_note">Quick note</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="dialog_hint">Type anything. The first line becomes the title.</string>
+</resources>

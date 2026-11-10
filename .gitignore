@@ -1,0 +1,6 @@
+build/
+*.jks
+*.keystore
+local.properties
+.idea/
+*.iml

@@ -36,6 +36,10 @@ class Api(private val secure: SecureStore, private val base: String = BuildConfi
 
     fun signUp(email: String, password: String, name: String) = post("nfAuth", JSONObject().put("action", "signup").put("email", email).put("password", password).put("name", name), auth = false).also { save(it, email) }
     fun signIn(email: String, password: String) = post("nfAuth", JSONObject().put("action", "signin").put("email", email).put("password", password), auth = false).also { save(it, email) }
+    /** Google sign-in: the backend verifies the token with Google before issuing a session. */
+    fun signInWithGoogle(accessToken: String) =
+        post("nfAuth", JSONObject().put("action", "google").put("accessToken", accessToken), auth = false).also { save(it, it.optString("email")) }
+
     fun signOut() { runCatching { post("nfAuth", JSONObject().put("action", "signout")) }; secure.clear() }
     fun deleteAccount() = post("nfAuth", JSONObject().put("action", "delete_account")).also { secure.clear() }
     fun exportAll(): JSONObject = post("nfSync", JSONObject().put("action", "export"))

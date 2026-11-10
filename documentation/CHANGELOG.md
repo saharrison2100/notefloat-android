@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0 - 10 November 2026
+
+Google account sign-in and Google Drive backup.
+
+- **Sign in with Google.** Google Identity Services, no client id or secret stored in the app or the
+  APK. The access token is verified with Google by the account service (userinfo plus tokeninfo)
+  before a session is issued, so the client cannot claim an email address it does not own. Password
+  sign-in still works, and an account created through Google refuses a password attempt with a clear
+  message instead of a server error.
+- **Google Drive backup.** One snapshot file, `notefloat-notes.json`, in the app's own hidden
+  `appDataFolder`, reached with the `drive.appdata` scope and nothing wider. Back up now, restore, or
+  two-way merge; the background sync worker now also runs the Drive backup on the same schedule when
+  Drive is connected.
+- **Merge rules for Drive**, the same never-discard policy as the account sync: identical rows collapse,
+  a genuine two-sided edit keeps both, the newer edit keeps the id and the other becomes
+  "(conflict copy)". Audio bytes are never part of the snapshot and a local recording path is never
+  replaced by a remote row.
+- New **Google and Drive** screen, reachable from More and from Storage and sync, showing which Google
+  account is connected, the last backup time, and the disconnect action.
+- `documentation/GOOGLE_DRIVE_SETUP.md`: the one-time Google Cloud registration, with the package name
+  and the release certificate SHA-1 the console asks for.
+- 10 new JVM unit tests (21 in total) for the merge rules and the snapshot codec, including a foreign
+  or truncated file that must not crash or wipe anything.
+
 ## 1.1.0 - 10 November 2026
 
 Complete native rebuild. The 1.0.0 file is preserved in `legacy-v1.0/`.

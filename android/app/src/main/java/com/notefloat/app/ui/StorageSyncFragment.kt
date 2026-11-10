@@ -44,6 +44,10 @@ class StorageSyncFragment : Fragment() {
             account.removeAllViews()
             if (!secure.signedIn) {
                 account.addView(ui.body("Sign in to back up and sync your notes across devices. Your notes are private to your account."))
+                account.addView(ui.button("Continue with Google") { m.open(GoogleAccountFragment()) })
+                account.addView(ui.spacer(10f))
+                account.addView(ui.body("Or use an email and password:"))
+                account.addView(ui.spacer(4f))
                 val email = ui.edit("Email"); val pw = ui.edit("Password (8+ characters)"); pw.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
                 account.addView(email); account.addView(ui.spacer(8f)); account.addView(pw); account.addView(ui.spacer(8f))
                 fun auth(signup: Boolean) {
@@ -59,6 +63,7 @@ class StorageSyncFragment : Fragment() {
             } else {
                 account.addView(ui.group(
                     ui.tapRow("Signed in as", secure.email) {},
+                    ui.tapRow("Google and Drive", if (p.driveEnabled) "Backup on" else "Backup off") { m.open(GoogleAccountFragment()) },
                     ui.switchRow("Sync", "Back up and sync notes, reminders and voice details", p.syncEnabled) { p.syncEnabled = it; SyncWorker.schedulePeriodic(requireContext().applicationContext); if (it) SyncWorker.syncSoon(requireContext().applicationContext) },
                     ui.switchRow("Wi-Fi only", "Skip sync on mobile data", p.syncWifiOnly) { p.syncWifiOnly = it; SyncWorker.schedulePeriodic(requireContext().applicationContext) },
                 ))

@@ -6,7 +6,7 @@ NoteFloat is a native Android app. Its centrepiece is a translucent glass handle
 left or right screen edge over every other app, from a foreground service. Tap it and a compact panel
 opens with quick text capture, voice recording, recent notes, clipboard capture, reminders and search.
 
-Version 1.1.0 (versionCode 11), Android 7.0 and up, built from Kotlin with no web views and no
+Version 1.2.0 (versionCode 12), Android 7.0 and up, built from Kotlin with no web views and no
 third-party UI kit.
 
 ## Download
@@ -19,7 +19,7 @@ so 1.0.0 and 1.1.0 upgrade over each other.
 2. Open NoteFloat, follow the welcome screen, and grant **Display over other apps**.
 3. Optionally grant notifications (reminders) and the microphone when you first record.
 
-## What is in 1.1.0
+## What is in 1.2.0
 
 **Floating sidebar** - genuine `TYPE_APPLICATION_OVERLAY` windows owned by a foreground service.
 Drag vertically to move, drag across the middle of the screen to swap edge, tap to expand, double tap
@@ -41,6 +41,17 @@ as a note in a category. No background clipboard monitoring.
 **Cloud sync (optional)** - account sign-up/sign-in, then offline-first sync to the Base44 backend in
 `base44/`. Local Room is the source of truth while offline; conflicts are kept as copies, never dropped.
 
+**Sign in with Google** - Google Identity Services, no client id or secret in the app. The token is
+verified with Google by `base44/nfAuth.ts` before a session is issued. Password sign-in still works.
+
+**Google Drive backup (optional)** - one file, `notefloat-notes.json`, in the app's own hidden
+`appDataFolder`, using the `drive.appdata` scope and nothing wider. Back up, restore, or merge both
+ways with the same never-discard rules as the account sync. Registering the app once in a Google
+Cloud project is required; see `documentation/GOOGLE_DRIVE_SETUP.md`.
+
+**Privacy, updated** - Drive is the user's own storage, not ours: the app holds no client secret, asks
+for the narrowest scope that works, and cannot see any other file in that Drive.
+
 **Privacy** - no analytics, no ad SDKs, no third-party libraries beyond AndroidX and Kotlin. Audio stays
 on the device unless you enable audio upload. Account deletion removes the server data in one action.
 Local JSON export in Storage and sync.
@@ -50,7 +61,7 @@ Local JSON export in Storage and sync.
 ```
 android/            Gradle project (Kotlin, minSdk 24, targetSdk 34)
 base44/             backend function sources (deployed separately, see documentation/API_SPECIFICATION.md)
-documentation/      architecture, API contract, build instructions, changelog
+documentation/      architecture, API contract, build instructions, Google setup, changelog
 legacy-v1.0/        the original single-file 1.0.0 app, kept for reference
 tests/              notes and fixtures for manual QA passes
 ```

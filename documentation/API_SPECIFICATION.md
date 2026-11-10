@@ -11,6 +11,7 @@ Base URL: `https://neo-58a47037.base44.app/functions/`
 | --- | --- | --- |
 | `signup` | `{email, password, name}` | `{token, expiresAt, email, name}` |
 | `signin` | `{email, password}` | `{token, expiresAt, email, name}` |
+| `google` | `{accessToken}` (a Google OAuth access token from the device) | `{token, expiresAt, email, name}` |
 | `signout` | empty, `Authorization: Bearer <token>` | `{ok: true}` |
 | `delete_account` | empty, bearer | `{ok: true, deleted: n}` |
 | `me` | empty, bearer | `{email, name, expiresAt}` |
@@ -23,6 +24,30 @@ Rules:
 3. Sign-in answers `Email or password is incorrect.` for both a missing account and a wrong password.
 4. Ten consecutive failed attempts on one account answer `429` until a successful sign-in resets the counter.
 5. Error responses are `{"error": "..."}` with 400/401/409/429/500.
+6. `google` never trusts the client's claim of an email. It calls Google twice with the presented
+   token: `oauth2/v3/userinfo` (which account, is the email verified) and `oauth2.googleapis.com/tokeninfo`
+   (was this token really issued to an app, and is it still live). Either call failing means no session.
+   An account is created on first Google sign-in with `provider: "google"` and the Google subject id in
+   `googleId`; an existing password account with the same email is linked to that Google account.
+7. A password sign-in against a Google-only account is refused with `409` and
+   `This account signs in with Google. Use Continue with Google.`
+8. Optional: set `GOOGLE_OAUTH_AUDIENCE` on the function (client ids, comma separated) to accept tokens
+   only from OAuth clients in your own Google Cloud project.
+
+## Google Drive (no server involvement)
+
+Drive backup does not go through Base44 at all: the app talks to `www.googleapis.com/drive/v3`
+directly with a short-lived access token held in EncryptedSharedPreferences.
+
+| Call | Purpose |
+| --- | --- |
+| `GET /files?spaces=appDataFolder&q=name = 'notefloat-notes.json'` | find the snapshot |
+| `GET /files/{id}?alt=media` | download it |
+| `POST /upload/files?uploadType=multipart` | create it, parents `["appDataFolder"]` |
+| `PATCH /upload/files/{id}?uploadType=media` | replace its contents |
+
+Scope: `https://www.googleapis.com/auth/drive.appdata` only. Registration steps in
+`GOOGLE_DRIVE_SETUP.md`.
 
 ## nfSync - records
 

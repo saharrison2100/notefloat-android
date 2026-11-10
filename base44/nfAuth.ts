@@ -6,6 +6,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
  * Actions (POST body):
  *   { action: "signup",  email, password, name }  -> { token, expiresAt, email, name }
  *   { action: "signin",  email, password }        -> { token, expiresAt, email, name }
+ *   { action: "google",  accessToken }            -> { token, expiresAt, email, name }
+ *     The Google token is verified with Google itself (userinfo + tokeninfo) before any session is
+ *     issued, so a client cannot simply claim an email address.
  *   { action: "signout" }  (Authorization: Bearer <token>)
  *   { action: "delete_account" } (Authorization: Bearer <token>)
  *   { action: "me" }       (Authorization: Bearer <token>)
@@ -119,6 +122,9 @@ Deno.serve(async (req) => {
       // signin: same message whether the account is missing or the password is wrong
       if (existing.length === 0) return fail('Email or password is incorrect.', 401);
       const account = existing[0];
+      if (!account.passHash || Number(account.iterations ?? 0) < 1000) {
+        return fail('This account signs in with Google. Use Continue with Google.', 409);
+      }
       const attempts = Number(account.failedAttempts ?? 0);
       if (attempts >= 10) return fail('Too many failed attempts. Try again later or reset the password.', 429);
       const computed = await hashPassword(password, String(account.salt), Number(account.iterations ?? ITERATIONS));
@@ -128,6 +134,39 @@ Deno.serve(async (req) => {
       }
       if (attempts > 0) await db.NfAccount.update(account.id, { failedAttempts: 0 });
       return json(await issueSession(db, account.id, email, String(account.name ?? '')));
+    }
+
+    if (action === 'google') {
+      const accessToken = String(body.accessToken ?? '').trim();
+      if (accessToken.length < 20 || accessToken.length > 4096) return fail('Google sign-in failed. Try again.', 401);
+
+      const verified = await verifyGoogleToken(accessToken);
+      if (!verified) return fail('Google could not confirm this account. Try again.', 401);
+
+      const email = normaliseEmail(verified.email);
+      if (!validEmail(email)) return fail('Google did not return a usable email address.', 401);
+
+      const existing = await rows(db.NfAccount.filter({ email }));
+      let account = existing[0];
+
+      if (!account) {
+        account = await db.NfAccount.create({
+          email,
+          name: String(verified.name ?? '').slice(0, 80),
+          googleId: String(verified.sub ?? '').slice(0, 120),
+          provider: 'google',
+          passHash: '',
+          salt: '',
+          iterations: 0,
+          lastSignInAt: Date.now(),
+        });
+      } else {
+        const patch: Row = { lastSignInAt: Date.now() };
+        if (!account.googleId && verified.sub) patch.googleId = String(verified.sub).slice(0, 120);
+        await db.NfAccount.update(account.id, patch);
+      }
+
+      return json(await issueSession(db, account.id, email, String(account.name ?? verified.name ?? '')));
     }
 
     // ---- every action below needs a valid session ----
@@ -166,6 +205,44 @@ Deno.serve(async (req) => {
     return fail(e instanceof Error ? e.message : 'Unexpected error', 500);
   }
 });
+
+/**
+ * Verifies a Google OAuth access token with Google, never with the client's claims.
+ *
+ *   userinfo  proves the token is live and tells us which Google account owns it.
+ *   tokeninfo proves the token was issued to an OAuth client (i.e. an app), not hand-crafted, and
+ *   that it has not expired.
+ *
+ * Set GOOGLE_OAUTH_AUDIENCE (comma separated client ids) in the function's environment to also pin
+ * the audience to clients in your own Google Cloud project; without it the check is limited to
+ * "Google issued this token to this account".
+ */
+async function verifyGoogleToken(accessToken: string): Promise<{ email: string; name: string; sub: string } | null> {
+  try {
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!userRes.ok) return null;
+    const user: any = await userRes.json();
+    if (!user?.email || user.email_verified === false) return null;
+
+    const infoRes = await fetch('https://oauth2.googleapis.com/tokeninfo?access_token=' + encodeURIComponent(accessToken));
+    if (!infoRes.ok) return null;
+    const info: any = await infoRes.json();
+    if (!info?.aud) return null;
+    if (Number(info.expires_in ?? 0) <= 0) return null;
+
+    const pinned = String((globalThis as any).Deno?.env?.get?.('GOOGLE_OAUTH_AUDIENCE') ?? '').trim();
+    if (pinned) {
+      const allowed = pinned.split(',').map((v) => v.trim()).filter(Boolean);
+      if (!allowed.includes(String(info.aud)) && !allowed.includes(String(info.azp ?? ''))) return null;
+    }
+
+    return { email: String(user.email), name: String(user.name ?? ''), sub: String(user.sub ?? '') };
+  } catch {
+    return null;
+  }
+}
 
 async function issueSession(db: any, accountId: string, email: string, name: string) {
   const token = randomHex(32);

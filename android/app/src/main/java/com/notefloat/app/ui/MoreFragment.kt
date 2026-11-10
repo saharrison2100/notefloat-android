@@ -24,9 +24,10 @@ class MoreFragment : Fragment() {
             ui.tapRow("Floating sidebar", null) { m.open(FloatingConfigFragment()) },
             ui.tapRow("Settings", null) { m.open(SettingsFragment()) },
             ui.tapRow("Storage and sync", null) { m.open(StorageSyncFragment()) },
+            ui.tapRow("Google and Drive", null) { m.open(GoogleAccountFragment()) },
             ui.tapRow("Welcome tour", null) { m.open(OnboardingFragment()) },
         ))
-        col.addView(ui.body("NoteFloat 1.1.0"))
+        col.addView(ui.body("NoteFloat 1.2.0"))
         return ui.scroll(col)
     }
 }

@@ -47,6 +47,12 @@ class Prefs(context: Context) {
     var uploadAudio: Boolean get() = sp.getBoolean("uploadAudio", false); set(v) = sp.edit().putBoolean("uploadAudio", v).apply()
     var lastSyncAt: Long get() = sp.getLong("lastSyncAt", 0); set(v) = sp.edit().putLong("lastSyncAt", v).apply()
     var serverCursor: Long get() = sp.getLong("serverCursor", 0); set(v) = sp.edit().putLong("serverCursor", v).apply()
+
+    // Google Drive backup (independent of the account sync above)
+    var driveEnabled: Boolean get() = sp.getBoolean("driveEnabled", false); set(v) = sp.edit().putBoolean("driveEnabled", v).apply()
+    var driveLastSyncAt: Long get() = sp.getLong("driveLastSyncAt", 0); set(v) = sp.edit().putLong("driveLastSyncAt", v).apply()
+    /** "GOOGLE" when the account was created through Google sign-in, "EMAIL" for password accounts. */
+    var signInMethod: String get() = sp.getString("signInMethod", "EMAIL") ?: "EMAIL"; set(v) = sp.edit().putString("signInMethod", v).apply()
 }
 
 /** Auth tokens live in EncryptedSharedPreferences (AES-256, key in Android Keystore). */
@@ -61,6 +67,10 @@ class SecureStore(context: Context) {
     var token: String? get() = sp.getString("token", null); set(v) = sp.edit().apply { if (v == null) remove("token") else putString("token", v) }.apply()
     var email: String? get() = sp.getString("email", null); set(v) = sp.edit().apply { if (v == null) remove("email") else putString("email", v) }.apply()
     var tokenExpiry: Long get() = sp.getLong("expiry", 0); set(v) = sp.edit().putLong("expiry", v).apply()
+    /** Google account email and the Drive access token, kept encrypted like the session token. */
+    var googleEmail: String? get() = sp.getString("googleEmail", null); set(v) = sp.edit().apply { if (v == null) remove("googleEmail") else putString("googleEmail", v) }.apply()
+    var googleDriveToken: String? get() = sp.getString("driveToken", null); set(v) = sp.edit().apply { if (v == null) remove("driveToken") else putString("driveToken", v) }.apply()
+    var googleDriveTokenExpiry: Long get() = sp.getLong("driveTokenExpiry", 0); set(v) = sp.edit().putLong("driveTokenExpiry", v).apply()
     fun clear() = sp.edit().clear().apply()
     val signedIn: Boolean get() = !token.isNullOrEmpty() && (tokenExpiry == 0L || tokenExpiry > System.currentTimeMillis())
 }

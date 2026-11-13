@@ -56,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         })
         supportFragmentManager.addOnBackStackChangedListener { bar.visibility = if (supportFragmentManager.backStackEntryCount > 0) View.GONE else View.VISIBLE }
 
+        if (android.os.Build.VERSION.SDK_INT >= 25) publishShortcuts()
+
         if (savedInstanceState == null) {
             if (!prefs.onboarded) show(OnboardingFragment(), false) else { bar.selectedItemId = 1 }
             handleIntent(intent)
@@ -66,6 +68,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(i: Intent?) {
         i ?: return
+        // Launcher long-press shortcuts (see publishShortcuts below).
+        if (i.getBooleanExtra(EXTRA_NEW_NOTE, false)) { i.removeExtra(EXTRA_NEW_NOTE); open(EditorFragment.newInstance(null, null)); return }
+        if (i.getBooleanExtra(EXTRA_VOICE, false)) { i.removeExtra(EXTRA_VOICE); bar.selectedItemId = 3; return }
         i.getStringExtra("noteId")?.let { id -> open(EditorFragment.newInstance(id)); i.removeExtra("noteId") }
         if (i.action == Intent.ACTION_SEND && i.type == "text/plain") {
             i.getStringExtra(Intent.EXTRA_TEXT)?.let { t -> open(EditorFragment.newInstance(null, t)) }
@@ -101,6 +106,23 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out)
             .replace(container.id, f).also { if (addToBack) it.addToBackStack(null) }.commit()
     }
+    /** Long-press launcher shortcuts: new note, voice memo. Dynamic, so no res xml to keep in sync. */
+    private fun publishShortcuts() {
+        runCatching {
+            fun sc(id: String, label: String, extra: String) = androidx.core.content.pm.ShortcutInfoCompat.Builder(this, id)
+                .setShortLabel(label).setLongLabel(label)
+                .setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(this, com.notefloat.app.R.drawable.ic_notif))
+                .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra(extra, true))
+                .build()
+            androidx.core.content.pm.ShortcutManagerCompat.setDynamicShortcuts(this, listOf(sc("new_note", "New note", EXTRA_NEW_NOTE), sc("voice_memo", "Voice memo", EXTRA_VOICE)))
+        }
+    }
+
     fun open(f: Fragment) = show(f, true)
+    companion object {
+        const val EXTRA_NEW_NOTE = "open_new_note"
+        const val EXTRA_VOICE = "open_voice"
+    }
+
     fun finishOnboarding() { prefs.onboarded = true; bar.selectedItemId = 1; switchTab(1) }
 }

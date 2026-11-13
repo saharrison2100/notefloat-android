@@ -3,14 +3,14 @@
 ## Requirements
 
 - JDK 17
-- Android SDK with platform 34 and build-tools (set `ANDROID_HOME`)
-- Gradle 8.7 (or the wrapper)
+- Android SDK with platform 36 and build-tools 36.0.0 (set `ANDROID_HOME`)
+- No separate Gradle install: the wrapper is committed (`./gradlew`, Gradle 8.14.3)
 
 ## Debug build
 
 ```
 cd android
-gradle :app:assembleDebug
+./gradlew :app:assembleDebug
 ```
 
 ## Release build
@@ -18,7 +18,7 @@ gradle :app:assembleDebug
 Signing values are read from `android/keystore.properties` (git-ignored):
 
 ```
-storeFile=/absolute/path/notefloat-release.jks
+storeFile=notefloat-release.jks   # relative to android/, or use an absolute path
 storePassword=...
 keyAlias=notefloat
 keyPassword=...
@@ -29,7 +29,7 @@ Without either, Gradle still builds but produces an unsigned APK.
 
 ```
 cd android
-gradle :app:assembleRelease
+./gradlew :app:assembleRelease
 ```
 
 Output: `android/app/build/outputs/apk/release/app-release.apk` (release, minified, signed).
@@ -37,13 +37,13 @@ Output: `android/app/build/outputs/apk/release/app-release.apk` (release, minifi
 ## Checks before publishing
 
 ```
-gradle :app:testDebugUnitTest                      # 11 unit tests on the note markup engine
+./gradlew :app:testDebugUnitTest                   # 21 unit tests (markup engine, Drive merge)
 apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
 aapt2 dump badging app/build/outputs/apk/release/app-release.apk | head -3
 ```
 
-`aapt2 dump badging` should report `com.notefloat.app`, `versionCode 11`, `versionName 1.1.0`,
-`sdkVersion 24`. The certificate must stay the same across releases or Android refuses to upgrade
+`aapt2 dump badging` should report `com.notefloat.app`, `versionCode 13`, `versionName 1.3.0`,
+`targetSdkVersion 36`, `sdkVersion 24`. The certificate must stay the same across releases or Android refuses to upgrade
 an installed copy.
 
 ## Backend

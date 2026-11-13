@@ -6,7 +6,7 @@ NoteFloat is a native Android app. Its centrepiece is a translucent glass handle
 left or right screen edge over every other app, from a foreground service. Tap it and a compact panel
 opens with quick text capture, voice recording, recent notes, clipboard capture, reminders and search.
 
-Version 1.2.0 (versionCode 12), Android 7.0 and up, built from Kotlin with no web views and no
+Version 1.3.0 (versionCode 13), Android 7.0 and up, targeting Android 16 (API 36), built from Kotlin with no web views and no
 third-party UI kit.
 
 ## Download
@@ -18,6 +18,22 @@ so 1.0.0 and 1.1.0 upgrade over each other.
 1. Open the APK on the phone and allow installs from that source.
 2. Open NoteFloat, follow the welcome screen, and grant **Display over other apps**.
 3. Optionally grant notifications (reminders) and the microphone when you first record.
+
+## What is in 1.3.0
+
+Platform upgrade so the app is distributable again after Google Play's API 36 deadline.
+
+**targetSdk 36** - Play has required Android 16 targets for new apps and updates since 31 August 2026,
+so 1.2.0 could no longer be uploaded. Edge-to-edge is enforced at this target and the shell pads for
+system bars and the keyboard rather than opting out (the opt-out is ignored from API 36 anyway).
+
+**Toolchain** - AGP 8.13.2, Kotlin 2.3.21, KSP 2.3.14, Gradle 8.14.3 via a wrapper that is now
+committed. Room 2.8.5, WorkManager 2.11.2, Material 1.13.0, lifecycle 2.10.0, coroutines 1.11.0.
+AGP 9 is the next step, not this one: it replaces the Kotlin plugin with built-in Kotlin.
+
+**Launcher shortcuts** - long-press the icon for New note or Voice memo.
+
+**Themed icon** - monochrome layer, so Android 13+ tints NoteFloat to match the wallpaper.
 
 ## What is in 1.2.0
 
@@ -59,7 +75,7 @@ Local JSON export in Storage and sync.
 ## Repository layout
 
 ```
-android/            Gradle project (Kotlin, minSdk 24, targetSdk 34)
+android/            Gradle project (Kotlin, minSdk 24, targetSdk 36, wrapper committed)
 base44/             backend function sources (deployed separately, see documentation/API_SPECIFICATION.md)
 documentation/      architecture, API contract, build instructions, Google setup, changelog
 legacy-v1.0/        the original single-file 1.0.0 app, kept for reference

@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.3.0 - 13 November 2026
+
+Platform and toolchain upgrade, so the app targets Android 16 and can be distributed again.
+
+- **targetSdk 36 (Android 16)**, compileSdk 36. Google Play has required API 36 for new apps and
+  updates since 31 August 2026, so 1.2.0 could no longer be uploaded. Edge-to-edge is now enforced by
+  the platform; the shell already pads for system bars and the keyboard, and that path was verified
+  against the new behaviour rather than opted out of (the opt-out flag is ignored from API 36).
+- **Toolchain**: AGP 8.5.2 to 8.13.2, Kotlin 1.9.24 to 2.3.21, KSP 1.9.24-1.0.20 to 2.3.14,
+  Gradle wrapper 8.14.3 committed to the repo (it was missing, so builds depended on a locally
+  installed Gradle). `kotlinOptions` migrated to the `compilerOptions` DSL, which Kotlin 2.3 requires.
+  AGP 9 was deliberately not taken: it replaces the Kotlin plugin with built-in Kotlin and needs its
+  own migration, kept as a separate step.
+- **Libraries**: Room 2.6.1 to 2.8.5, WorkManager 2.9.1 to 2.11.2, core-ktx to 1.18.0, activity to
+  1.12.4, lifecycle to 2.10.0, Material to 1.13.0, appcompat to 1.7.1, recyclerview to 1.4.0,
+  constraintlayout to 2.2.2, coroutines to 1.11.0, play-services-auth to 21.6.0. Pinned to the
+  releases that still compile against API 36; the newest core and activity lines already demand
+  compileSdk 37.
+- **security-crypto moves to the 1.1.0 stable release.** `EncryptedSharedPreferences` is deprecated
+  there, but it is kept on purpose: swapping the storage now would make every stored session
+  unreadable and silently sign everyone out. The Keystore-backed replacement is planned as its own
+  change with a migration path.
+- **Launcher shortcuts**: long-press the icon for New note and Voice memo. Published dynamically, with
+  no shortcuts xml to drift out of sync with the app id.
+- **Themed icon**: monochrome layer added so Android 13+ can tint NoteFloat with the wallpaper palette.
+- Room schema export moved to a top-level `ksp` block, and one crashing lint detector
+  (`NullSafeMutableLiveData`, a bug in lifecycle 2.10.0's lint) is disabled so release builds complete.
+
 ## 1.2.0 - 10 November 2026
 
 Google account sign-in and Google Drive backup.
